@@ -1,0 +1,75 @@
+substitutions:
+  device_name: livingroom_fan #change
+  friendly_name: Living Room Fan Switch #change
+  icon: "mdi:fan-switch"
+
+esphome:
+  name: ${device_name}
+  platform: ESP8266
+  board: esp12e
+
+# Enable logging
+logger:
+  baud_rate: 0
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: ${device_name}
+    password: !secret ap_pass
+
+captive_portal:
+
+web_server:
+  port: 80
+
+sensor:
+  - platform: uptime
+    name: ${friendly_name} Uptime
+
+  - platform: wifi_signal
+    name: ${friendly_name} WiFi Signal
+    update_interval: 60s
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ${friendly_name} IP Address
+    ssid:
+      name: ${friendly_name} Connected SSID
+    bssid:
+      name: ${friendly_name} Connected BSSID
+    mac_address:
+      name: ${friendly_name} Mac Wifi Address
+
+uart:
+  rx_pin: GPIO3
+  tx_pin: GPIO1
+  baud_rate: 115200
+
+tuya:
+
+fan:
+  - platform: "tuya"
+    name: ${friendly_name} Switch
+    switch_datapoint: 1
+    speed_datapoint: 3
+    speed_count: 4
+
+switch:
+  - platform: restart
+    name: ${friendly_name} Restart
+
+  
+
+

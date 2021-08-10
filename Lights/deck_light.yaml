@@ -1,0 +1,126 @@
+substitutions:
+  device_name: deck_light #change
+  friendly_name: Deck Light Switch #change
+  icon: "mdi:light-switch"
+
+esphome:
+  name: ${device_name}
+  platform: ESP8266
+  board: esp12e
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: ${device_name}
+    password: !secret ap_pass
+
+captive_portal:
+
+# Standard Information
+web_server:
+  port: 80
+
+sensor:
+  - platform: uptime
+    name: ${friendly_name} Uptime
+
+  - platform: wifi_signal
+    name: ${friendly_name} WiFi Signal
+    update_interval: 60s
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ${friendly_name} IP Address
+    ssid:
+      name: ${friendly_name} Connected SSID
+    bssid:
+      name: ${friendly_name} Connected BSSID
+    mac_address:
+      name: ${friendly_name} Mac Wifi Address
+
+status_led:
+  pin:
+    number: GPIO5   # Red LED
+    inverted: True
+
+binary_sensor:
+- platform: gpio
+  pin:
+    number: GPIO4
+    inverted: True
+  id: sensor_${device_name}
+  internal: True
+
+- platform: gpio
+  pin:
+    number: GPIO13
+    inverted: True
+  id: button_${device_name}
+  name: ${friendly_name} Button
+  on_press:
+    - switch.toggle: ${device_name}
+  internal: True
+
+light:
+- platform: binary
+  id: white_led_${device_name}
+  output: led_1_${device_name}
+  restore_mode: RESTORE_DEFAULT_ON
+  internal: True
+
+output:
+- platform: gpio
+  id: led_1_${device_name}
+  pin:
+    number: GPIO4
+    inverted: True
+
+switch:
+- platform: gpio
+  id: relay_${device_name}
+  pin:
+    number: GPIO12
+  restore_mode: RESTORE_DEFAULT_OFF
+  internal: True
+
+- platform: restart
+  name: ${friendly_name} Restart
+
+- platform: template
+  name: ${friendly_name}
+  id: ${device_name}
+  icon: ${icon}
+  lambda: |-
+    if (id(sensor_${device_name}).state) {
+      return false;
+    } else {
+      return true;
+    }
+  turn_on_action:
+  - if:
+      condition:
+      - binary_sensor.is_on: sensor_${device_name}
+      then:
+      - switch.turn_on: relay_${device_name}
+      - light.turn_off: white_led_${device_name}
+  turn_off_action:
+  - if:
+      condition:
+      - binary_sensor.is_off: sensor_${device_name}
+      then:
+      - switch.turn_off: relay_${device_name}
+      - light.turn_on: white_led_${device_name}
